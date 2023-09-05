@@ -1,0 +1,9 @@
+.vscode/
+.vscode-server/
+
+.local/
+
+.gnupg/
+
+.ipython/
+.ipynb_checkpoints/
