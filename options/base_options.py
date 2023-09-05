@@ -109,6 +109,17 @@ class BaseOptions():
             torch.cuda.set_device(opt.gpu_ids[0])
 
 
+        if isinstance(opt.new_resolution ,str):
+
+            def tuple_type(strings):
+                strings = strings.replace("(", "").replace(")", "")
+                mapped_int = map(int, strings.split(","))
+                return tuple(mapped_int)
+        
+            opt.new_resolution = tuple_type(opt.new_resolution )
+        if isinstance(opt.resample ,str):
+            opt.resample = bool(opt.resample)
+
         self.opt = opt
         return self.opt
 

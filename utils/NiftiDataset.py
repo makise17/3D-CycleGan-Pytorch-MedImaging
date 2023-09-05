@@ -97,13 +97,15 @@ def resize(img, new_size, interpolator):
     centering_transform = sitk.TranslationTransform(dimension)
     img_center = np.array(img.TransformContinuousIndexToPhysicalPoint(np.array(img.GetSize()) / 2.0))
     centering_transform.SetOffset(np.array(transform.GetInverse().TransformPoint(img_center) - reference_center))
-    centered_transform = sitk.Transform(transform)
-    centered_transform.AddTransform(centering_transform)
+    transform = sitk.Transform(transform)
+    # centered_transform.AddTransform(centering_transform)
+
+    centered_transform = sitk.CompositeTransform([transform, centering_transform])
     # Using the linear interpolator as these are intensity images, if there is a need to resample a ground truth
     # segmentation then the segmentation image should be resampled using the NearestNeighbor interpolator so that
     # no new labels are introduced.
 
-    return sitk.Resample(img, reference_image, centered_transform, interpolator, 0.0)
+    return sitk.Resample(img, referenceImage=reference_image, transform=centered_transform, interpolator=interpolator_image, defaultPixelValue = 0.0)
 
 
 def resample_sitk_image(sitk_image, spacing=None, interpolator=None, fill_value=0):
@@ -159,7 +161,9 @@ def resample_sitk_image(sitk_image, spacing=None, interpolator=None, fill_value=
     orig_origin = sitk_image.GetOrigin()
     orig_direction = sitk_image.GetDirection()
     orig_spacing = np.array(sitk_image.GetSpacing())
-    orig_size = np.array(sitk_image.GetSize(), dtype=np.int)
+    orig_size = np.array(sitk_image.GetSize(), dtype=int)
+    # orig_size = np.array(sitk_image.GetSize(), dtype=np.int)
+
 
     if not spacing:
         min_spacing = orig_spacing.min()
@@ -172,22 +176,33 @@ def resample_sitk_image(sitk_image, spacing=None, interpolator=None, fill_value=
 
     sitk_interpolator = _SITK_INTERPOLATOR_DICT[interpolator]
 
+    print("orig_spacing",orig_spacing)
+    print("new_spacing",new_spacing)
+
     new_size = orig_size * (orig_spacing / new_spacing)
-    new_size = np.ceil(new_size).astype(np.int)  # Image dimensions are in integers
+    # new_size = np.ceil(new_size).astype(np.int)  # Image dimensions are in integers
+    new_size = np.ceil(new_size).astype(int)  # Image dimensions are in integers
+
     new_size = [int(s) for s in new_size]  # SimpleITK expects lists, not ndarrays
 
     resample_filter = sitk.ResampleImageFilter()
+    resample_filter.SetSize(new_size)
+    resample_filter.SetOutputDirection(sitk_image.GetDirection())
+    resample_filter.SetOutputOrigin(sitk_image.GetOrigin())
+    resample_filter.SetTransform(sitk.Transform())
+    resample_filter.SetDefaultPixelValue(sitk_image.GetPixelIDValue())
+    resample_filter.SetInterpolator(sitk_interpolator)
 
-    resampled_sitk_image = resample_filter.Execute(sitk_image,
-                                                   new_size,
-                                                   sitk.Transform(),
-                                                   sitk_interpolator,
-                                                   orig_origin,
-                                                   new_spacing,
-                                                   orig_direction,
-                                                   fill_value,
-                                                   orig_pixelid)
-
+    # resampled_sitk_image = resample_filter.Execute(sitk_image,
+    #                                                new_size,
+    #                                                sitk.Transform(),
+    #                                                sitk_interpolator,
+    #                                                orig_origin,
+    #                                                new_spacing,
+    #                                                orig_direction,
+    #                                                fill_value,
+    #                                                orig_pixelid)
+    resampled_sitk_image = resample_filter.Execute(sitk_image)
     return resampled_sitk_image
 
 
@@ -406,7 +421,6 @@ class NifitDataSet(torch.utils.data.Dataset):
 
         self.which_direction = which_direction
         self.transforms = transforms
-
         self.shuffle_labels = shuffle_labels
         self.train = train
         self.test = test
@@ -446,8 +460,9 @@ class NifitDataSet(torch.utils.data.Dataset):
             data_path = label_path_copy
 
         # read image and label
+        # print(data_path)
         image = self.read_image(data_path)
-
+        # print(image)
         image = Normalization(image)  # set intensity 0-255
 
         # cast image and label
@@ -475,10 +490,12 @@ class NifitDataSet(torch.utils.data.Dataset):
             label.SetSpacing(image.GetSpacing())
 
         sample = {'image': image, 'label': label}
+        # print(sample)
 
         if self.transforms:  # apply the transforms to image and label (normalization, resampling, patches)
             for transform in self.transforms:
                 sample = transform(sample)
+    
 
         # convert sample to tf tensors
         image_np = abs(sitk.GetArrayFromImage(sample['image']))
@@ -856,20 +873,28 @@ class Resample(object):
             # assert len(new_resolution) == 3
             self.new_resolution = new_resolution
             self.check = check
+        # print(self.name)
 
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
-
+        # print(image)
         new_resolution = self.new_resolution
         check = self.check
-
+        # print("check", check)
         if check is True:
+            # print("if", check)
+            print("\n",self.name,"*"*100)
+            print("size_old",image.GetSize())
             image = resample_sitk_image(image, spacing=new_resolution, interpolator=_interpolator_image)
             label = resample_sitk_image(label, spacing=new_resolution, interpolator=_interpolator_label)
+            print("size_new",image.GetSize())
+            print("*"*100,self.name,"\n")
+
 
             return {'image': image, 'label': label}
-
-        if check is False:
+        # print("check", check)
+        if check == False:
+            # print("if", check)
             return {'image': image, 'label': label}
 
 
@@ -999,8 +1024,11 @@ class CropBackground(object):
 
         centroid = scipy.ndimage.measurements.center_of_mass(image_mask)
 
-        x_centroid = np.int(centroid[0])
-        y_centroid = np.int(centroid[1])
+        x_centroid = int(centroid[0])
+        y_centroid = int(centroid[1])
+        # x_centroid = np.int(centroid[0])
+        # y_centroid = np.int(centroid[1])
+
 
         roiFilter.SetIndex([int(x_centroid-(size_new[0])/2), int(y_centroid-(size_new[1])/2), 0])
 
@@ -1108,20 +1136,22 @@ class RandomCrop(object):
     def drop(self, probability):
         return random.random() <= probability
 
-
 class Augmentation(object):
     """
     Application of transforms. This is usually used for data augmentation.
     List of transforms: random noise
     """
 
-    def __init__(self):
+    def __init__(self, choices = None):
         self.name = 'Augmentation'
+        self.choices = choices
 
     def __call__(self, sample):
 
-        choice = np.random.choice([0, 1, 2, 3, 4, 5, 6, 7])
-
+        if self.choices is None:
+            choice = np.random.choice([0, 1, 2, 3, 4, 5, 6, 7])
+        else:
+            choice = np.random.choice(self.choices)
         # no augmentation
         if choice == 0:  # no augmentation
 
@@ -1431,3 +1461,155 @@ class BSplineDeformation(object):
     def NormalOffset(self, size, sigma):
         s = np.random.normal(0, size * sigma / 2, 100)  # 100 sample is good enough
         return int(round(random.choice(s)))
+    
+
+
+
+class Crop(object):
+    """
+    Crop randomly the image in a sample. This is usually used for data augmentation.
+      Drop ratio is implemented for randomly dropout crops with empty label. (Default to be 0.2)
+      This transformation only applicable in train mode
+
+    Args:
+      output_size (tuple or int): Desired output size. If int, cubic crop is made.
+    """
+
+    def __init__(self, output_size, drop_ratio=0.1, min_pixel=1):
+        self.name = 'Crop'
+
+        assert isinstance(output_size, (int, tuple))
+        if isinstance(output_size, int):
+            self.output_size = (output_size, output_size, output_size)
+        else:
+            assert len(output_size) == 3
+            self.output_size = output_size
+
+        assert isinstance(drop_ratio, (int, float))
+        if drop_ratio >= 0 and drop_ratio <= 1:
+            self.drop_ratio = drop_ratio
+        else:
+            raise RuntimeError('Drop ratio should be between 0 and 1')
+
+        assert isinstance(min_pixel, int)
+        if min_pixel >= 0:
+            self.min_pixel = min_pixel
+        else:
+            raise RuntimeError('Min label pixel count should be integer larger than 0')
+
+    def __call__(self, sample):
+        image, label = sample['image'], sample['label']
+        size_old = image.GetSize()
+        print("size_old",size_old)
+        size_new = self.output_size
+        print("size_new", size_new)
+
+        contain_label = False
+
+        roiFilter = sitk.RegionOfInterestImageFilter()
+        roiFilter.SetSize([size_new[0], size_new[1], size_new[2]])
+
+        # statFilter = sitk.StatisticsImageFilter()     # not useful
+        # statFilter.Execute(label)
+        # print(statFilter.GetMaximum(), statFilter.GetSum())
+
+        while not contain_label:
+            # get the start crop coordinate in ijk
+            if size_old[0] <= size_new[0]:
+                start_i = 0
+            else:
+                start_i = 0
+                # start_i = np.random.randint(0, size_old[0] - size_new[0])
+                # start_i = np.random.randint(0, size_old[0] - size_new[0])
+
+            if size_old[1] <= size_new[1]:
+                start_j = 0
+                # start_j = self.output_size[1]
+            else:
+                start_j = 0
+                # start_j = self.output_size[1]
+                # start_j = np.random.randint(0, size_old[1] - size_new[1])
+
+            if size_old[2] <= size_new[2]:
+                start_k = 0
+            else:
+                start_k = 0
+                # start_k = np.random.randint(0, size_old[2] - size_new[2])
+
+            roiFilter.SetIndex([start_i, start_j, start_k])
+
+            if Segmentation is False:
+                # threshold label into only ones and zero
+                threshold = sitk.BinaryThresholdImageFilter()
+                threshold.SetLowerThreshold(1)
+                threshold.SetUpperThreshold(255)
+                threshold.SetInsideValue(1)
+                threshold.SetOutsideValue(0)
+                mask = threshold.Execute(label)
+                mask_cropped = roiFilter.Execute(mask)
+                label_crop = roiFilter.Execute(label)
+                statFilter = sitk.StatisticsImageFilter()
+                statFilter.Execute(mask_cropped)  # mine for GANs
+
+            if Segmentation is True:
+                label_crop = roiFilter.Execute(label)
+                statFilter = sitk.StatisticsImageFilter()
+                statFilter.Execute(label_crop)
+
+            # will iterate until a sub volume containing label is extracted
+            # pixel_count = seg_crop.GetHeight()*seg_crop.GetWidth()*seg_crop.GetDepth()
+            # if statFilter.GetSum()/pixel_count<self.min_ratio:
+            if statFilter.GetSum() < self.min_pixel:
+                contain_label = self.drop(self.drop_ratio)  # has some probabilty to contain patch with empty label
+            else:
+                contain_label = True
+
+        image_crop = roiFilter.Execute(image)
+
+        return {'image': image_crop, 'label': label_crop}
+
+    def drop(self, probability):
+        return random.random() <= probability
+    
+
+
+class Resize(object):
+    """
+    Resample the volume in a sample to a given voxel size
+
+      Args:
+          voxel_size (float or tuple): Desired output size.
+          If float, output volume is isotropic.
+          If tuple, output voxel size is matched with voxel size
+          Currently only support linear interpolation method
+    """
+
+    def __init__(self, new_size, check):
+        self.name = 'Resize'
+
+        # assert isinstance(new_resolution, (float, tuple))
+        if isinstance(new_size, tuple):
+            assert len(new_size) == 3
+            self.new_size = new_size
+            self.check = check
+        # print(self.name)
+
+    def __call__(self, sample):
+        image, label = sample['image'], sample['label']
+        # print(image)
+        new_size = self.new_size
+        check = self.check
+        # print("check", check)
+        if check is True:
+            # print("if", check)
+            print("\n",self.name,"*"*100)
+            print("size_old",image.GetSize())
+            image = resize(image, new_size=new_size, interpolator=_interpolator_image)
+            label = resize(image, new_size=new_size, interpolator=_interpolator_image)
+            print("size_new",image.GetSize())
+            print("*"*100,self.name,"\n")
+            return {'image': image, 'label': label}
+        # print("check", check)
+        if check is False:
+            # print("if", check)
+            return {'image': image, 'label': label}
