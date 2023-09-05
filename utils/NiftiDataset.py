@@ -495,7 +495,14 @@ class NifitDataSet(torch.utils.data.Dataset):
         if self.transforms:  # apply the transforms to image and label (normalization, resampling, patches)
             for transform in self.transforms:
                 sample = transform(sample)
-    
+
+        #dataの一つでも表示してやろう
+        # from monai.visualize import matshow3d
+        # import matplotlib.pyplot as plt
+        # fig = plt.figure()
+        # matshow3d(sitk.GetArrayViewFromImage(sample['image']), fig=fig, title="List of Volumes")
+        # plt.savefig(f"samples/{index}.png")
+
 
         # convert sample to tf tensors
         image_np = abs(sitk.GetArrayFromImage(sample['image']))
@@ -1602,12 +1609,14 @@ class Resize(object):
         # print("check", check)
         if check is True:
             # print("if", check)
-            print("\n",self.name,"*"*100)
-            print("size_old",image.GetSize())
+            
+            # print("\n",self.name,"*"*100)
+            # print("size_old",image.GetSize())  
             image = resize(image, new_size=new_size, interpolator=_interpolator_image)
             label = resize(image, new_size=new_size, interpolator=_interpolator_image)
-            print("size_new",image.GetSize())
-            print("*"*100,self.name,"\n")
+            # print("size_new",image.GetSize())
+            # print("*"*100,self.name,"\n")
+
             return {'image': image, 'label': label}
         # print("check", check)
         if check is False:

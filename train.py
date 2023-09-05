@@ -50,9 +50,6 @@ if __name__ == '__main__':
         epoch_iter = 0
 
         for i, data in enumerate(train_loader):
-            #dataの一つでも表示してやろう
-
-
             iter_start_time = time.time()
             if total_steps % opt.print_freq == 0:
                 t_data = iter_start_time - iter_data_time
