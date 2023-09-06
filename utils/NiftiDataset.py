@@ -1613,7 +1613,7 @@ class Resize(object):
             # print("\n",self.name,"*"*100)
             # print("size_old",image.GetSize())  
             image = resize(image, new_size=new_size, interpolator=_interpolator_image)
-            label = resize(image, new_size=new_size, interpolator=_interpolator_image)
+            label = resize(label, new_size=new_size, interpolator=_interpolator_image)
             # print("size_new",image.GetSize())
             # print("*"*100,self.name,"\n")
 
