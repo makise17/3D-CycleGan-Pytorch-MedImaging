@@ -295,7 +295,7 @@ def flipit(image, axes):
     spacing = image.GetSpacing()
     direction = image.GetDirection()
     origin = image.GetOrigin()
-
+    # print("array.shape",array.shape)
     if axes == 0:
         array = np.fliplr(array)
     if axes == 1:
@@ -306,7 +306,7 @@ def flipit(image, axes):
     img.SetOrigin(origin)
     img.SetSpacing(spacing)
 
-    return image
+    return img
 
 
 def brightness(image):
@@ -319,6 +319,7 @@ def brightness(image):
     min = 0
 
     c = np.random.randint(-20, 20)
+    # c = 20
 
     array = array + c
 
@@ -345,6 +346,7 @@ def contrast(image):
     luminanza = int(IOD / ntotpixel)
 
     c = np.random.randint(-20, 20)
+    c = 100
 
     d = array - luminanza
     dc = d * abs(c) / 100
@@ -1167,9 +1169,10 @@ class Augmentation(object):
 
         # Additive Gaussian noise
         if choice == 1:  # Additive Gaussian noise
-
             mean = np.random.uniform(0, 1)
             std = np.random.uniform(0, 2)
+            # mean = 10
+            # std = 20
             self.noiseFilter = sitk.AdditiveGaussianNoiseImageFilter()
             self.noiseFilter.SetMean(mean)
             self.noiseFilter.SetStandardDeviation(std)
@@ -1183,8 +1186,8 @@ class Augmentation(object):
 
         # Recursive Gaussian
         if choice == 2:  # Recursive Gaussian
-
             sigma = np.random.uniform(0, 1.5)
+            # sigma = 10
             self.noiseFilter = sitk.RecursiveGaussianImageFilter()
             self.noiseFilter.SetOrder(0)
             self.noiseFilter.SetSigma(sigma)
@@ -1244,6 +1247,7 @@ class Augmentation(object):
         if choice == 5:  # Random flip
 
             axes = np.random.choice([0, 1])
+            # axes = 1
             image, label = sample['image'], sample['label']
 
             image = flipit(image, axes)
@@ -1531,9 +1535,10 @@ class Crop(object):
 
             if size_old[1] <= size_new[1]:
                 start_j = 0
-                # start_j = self.output_size[1]
+                # start_j = size_old[1] - size_new[1]
             else:
-                start_j = 0
+                start_j = size_old[1] - size_new[1]
+                # start_j = 0
                 # start_j = self.output_size[1]
                 # start_j = np.random.randint(0, size_old[1] - size_new[1])
 
@@ -1613,7 +1618,7 @@ class Resize(object):
             # print("\n",self.name,"*"*100)
             # print("size_old",image.GetSize())  
             image = resize(image, new_size=new_size, interpolator=_interpolator_image)
-            label = resize(image, new_size=new_size, interpolator=_interpolator_image)
+            label = resize(label, new_size=new_size, interpolator=_interpolator_image)
             # print("size_new",image.GetSize())
             # print("*"*100,self.name,"\n")
 

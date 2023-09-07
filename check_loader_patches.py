@@ -4,12 +4,15 @@ from torch.utils.data import DataLoader
 import utils.NiftiDataset as NiftiDataset
 import argparse
 
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
+
 parser = argparse.ArgumentParser()
-parser.add_argument("--data_path", type=str, default='./Data_folder/train/')
-parser.add_argument("--resample", action='store_true', default=False, help='Decide or not to resample the images to a new resolution')
-parser.add_argument("--new_resolution", type=float, default=(0.5, 0.5, 0.5), help='New resolution')
+parser.add_argument("--data_path", type=str, default=r'D:/Datasets/breast_mri/train/')
+# parser.add_argument("--resample", action='store_true', default=False, help='Decide or not to resample the images to a new resolution')
+# parser.add_argument("--new_resolution", type=float, default=(0.5, 0.5, 0.5), help='New resolution')
 parser.add_argument("--patch_size", type=int, nargs=3, default=[128, 128, 64], help="Input dimension for the generator")
-parser.add_argument("--batch_size", type=int, nargs=1, default=1, help="Batch size to feed the network (currently supports 1)")
+parser.add_argument("--batch_size", type=int, nargs=1, default=5, help="Batch size to feed the network (currently supports 1)")
 parser.add_argument("--drop_ratio", type=float, nargs=1, default=0, help="Probability to drop a cropped area if the label is empty. All empty patches will be dropped for 0 and accept all cropped patches if set to 1")
 parser.add_argument("--min_pixel", type=int, nargs=1, default=0.4, help="Percentage of minimum non-zero pixels in the cropped label")
 
@@ -17,19 +20,32 @@ args = parser.parse_args()
 
 min_pixel = int(args.min_pixel*((args.patch_size[0]*args.patch_size[1]*args.patch_size[2])/100))
 
+# choices = [0, 1, 2, 4]
+choices = [4]
 trainTransforms = [
-    NiftiDataset.Resample(args.new_resolution, args.resample),
+    # 比較
+    # NiftiDataset.Padding((213, 213, 90)),
+    NiftiDataset.Crop((213, 128, 90), args.drop_ratio, min_pixel),
+    # NiftiDataset.Augmentation(choices),
+    NiftiDataset.Resize((128, 64, 64), True),
+
+    # デフォ
+    # NiftiDataset.Augmentation(),
+    # NiftiDataset.Padding((128, 128, 64)),
+    # NiftiDataset.RandomCrop((128, 128, 64), args.drop_ratio, min_pixel),
+ 
+    # NiftiDataset.Resample(args.new_resolution, args.resample),
     # NiftiDataset.Registration(),
     # NiftiDataset.Align(),
     # NiftiDataset.Augmentation(),
     # NiftiDataset.Padding((300, 300, 300)),
-    NiftiDataset.RandomCrop((args.patch_size[0], args.patch_size[1], args.patch_size[2]),
-                            args.drop_ratio, min_pixel)
+    # NiftiDataset.RandomCrop((args.patch_size[0], args.patch_size[1], args.patch_size[2]),
+                            # args.drop_ratio, min_pixel)
 ]
 
-train_gen = NifitDataSet(args.data_path, which_direction='AtoB', transforms=trainTransforms, shuffle_labels=True, train=True)
+train_gen = NifitDataSet(args.data_path, which_direction='AtoB', transforms=trainTransforms, shuffle_labels=False, train=True)
 print('lenght train list:',len(train_gen))
-train_loader = DataLoader(train_gen, batch_size=args.batch_size, shuffle=True)
+train_loader = DataLoader(train_gen, batch_size=args.batch_size, shuffle=False)
 
 
 class IndexTracker(object):
@@ -67,7 +83,10 @@ def plot3d(image):
     plt.show()
 
 
-batch1 = train_loader.dataset[random.randint(0, len(train_gen) - 1)]
+# batch1 = train_loader.dataset[random.randint(0, len(train_gen) - 1)]
+index = 300
+batch1 = train_loader.dataset[index]
+
 
 vol = batch1[0].numpy()
 mask = batch1[1].numpy()
@@ -76,5 +95,23 @@ print(vol.shape)
 vol = np.squeeze(vol, axis=0)
 mask = np.squeeze(mask, axis=0)
 
-plot3d(vol)
-plot3d(mask)
+# plot3d(vol)
+# plot3d(mask)
+
+#dataの一つでも表示してやろう
+from monai.visualize import matshow3d
+import matplotlib.pyplot as plt
+fig = plt.figure()
+vol = np.transpose(vol, (2, 1, 0))
+mask = np.transpose(mask, (2, 1, 0))
+
+matshow3d(vol, fig=fig, cmap='gray')
+plt.gca().axis('off')
+# plt.subplots_adjust(left=0.05, right=0.05, bottom=0.05, top=0.05)
+plt.savefig(f"aug_samples/{index}_vol.png")
+
+fig = plt.figure()
+matshow3d(mask, fig=fig, cmap='gray')
+plt.gca().axis('off')
+# plt.subplots_adjust(left=0.05, right=0.05, bottom=0.05, top=0.05)
+plt.savefig(f"aug_samples/{index}_mask.png")
