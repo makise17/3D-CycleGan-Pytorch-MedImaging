@@ -1,0 +1,51 @@
+from pathlib import Path
+import os
+import re
+import SimpleITK as sitk
+
+
+
+if __name__ == '__main__':
+
+    choice = ["CE", "pre"]
+    mode = 0
+    dirMRI = "/data/"
+
+    pathMRI = Path(dirMRI + choice[mode] )
+    # ファイルパスを数値として評価するための正規表現
+    p = re.compile(r'(\d+)')
+
+    dirNII = Path("/data/Nii")
+    if not dirNII.exists():
+        dirNII.mkdir()
+
+    # dirNIIで指定したフォルダ直下にchoice内のフォルダを作成する
+    dirMode = dirNII / choice[mode] 
+    if not dirMode.exists():
+        dirMode.mkdir()      
+        
+    for path in pathMRI.glob("*/"):
+        # pathMRI内のフォルダパスのみ取得
+        if not os.path.isdir(path):
+            continue
+        print(path)
+
+        files = sorted(list(map(str,path.glob("*.dcm"))), key = lambda s: int(p.findall(str(s))[-1]))
+        #print(str(files[0]))
+        reader = sitk.ImageSeriesReader()
+        reader.SetFileNames(files)
+        image = reader.Execute()
+
+        size = image.GetSize()
+        print(f"Image size: {size}")
+
+        output_file = str(path.name)+".nii.gz"
+
+        # 解像度毎にフォルダを分ける
+        dirOUT = dirMode / str(size).replace(" ","")
+        if not dirOUT.exists():
+            dirOUT.mkdir()   
+
+        output_file = str(dirOUT / output_file)
+        print(output_file)
+        sitk.WriteImage(image, output_file)
