@@ -8,7 +8,7 @@ import SimpleITK as sitk
 if __name__ == '__main__':
 
     choice = ["CE", "pre"]
-    mode = 0
+    mode = 1
     dirMRI = "/data/"
 
     pathMRI = Path(dirMRI + choice[mode] )
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     if not dirMode.exists():
         dirMode.mkdir()      
         
-    for path in pathMRI.glob("*/"):
+    for path in sorted(pathMRI.glob("*/")):
         # pathMRI内のフォルダパスのみ取得
         if not os.path.isdir(path):
             continue
@@ -45,7 +45,8 @@ if __name__ == '__main__':
         dirOUT = dirMode / str(size).replace(" ","")
         if not dirOUT.exists():
             dirOUT.mkdir()   
-
-        output_file = str(dirOUT / output_file)
+        output_file = dirOUT / output_file
+        if output_file.exists():
+            continue
         print(output_file)
-        sitk.WriteImage(image, output_file)
+        sitk.WriteImage(image, str(output_file))
