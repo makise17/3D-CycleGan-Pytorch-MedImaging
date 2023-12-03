@@ -7,8 +7,8 @@ import SimpleITK as sitk
 
 if __name__ == '__main__':
 
-    choice = ["CE", "pre"]
-    mode = 1
+    choice = ["CE", "pre", "PpostFS","PpreFS",]
+    mode = 2
     dirMRI = "/data/"
 
     pathMRI = Path(dirMRI + choice[mode] )
@@ -37,7 +37,7 @@ if __name__ == '__main__':
         image = reader.Execute()
 
         size = image.GetSize()
-        print(f"Image size: {size}")
+        # print(f"Image size: {size}")
 
         output_file = str(path.name)+".nii.gz"
 

@@ -141,9 +141,9 @@ def Registration(image, label):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--images', default='./Data_folder/T1', help='path to the images a (early frames)')
-parser.add_argument('--labels', default='./Data_folder/T2', help='path to the images b (late frames)')
-parser.add_argument('--split', default=50, help='number of images for testing')
+parser.add_argument('--images', default='/data/Data_folder/pre', help='path to the images a (early frames)')
+parser.add_argument('--labels', default='/data/Data_folder/post', help='path to the images b (late frames)')
+parser.add_argument('--split', default=10, help='number of images for testing')
 parser.add_argument('--resolution', default=(1.6,1.6,1.6), help='new resolution to resample the all data')
 args = parser.parse_args()
 
@@ -156,16 +156,16 @@ if __name__ == "__main__":
     reference_image = sitk.ReadImage(reference_image)
     reference_image = resample_sitk_image(reference_image, spacing=args.resolution, interpolator='linear')
 
-    if not os.path.isdir('./Data_folder/train'):
-        os.mkdir('./Data_folder/train')
+    if not os.path.isdir('/data/Data_folder/train'):
+        os.mkdir('/data/Data_folder/train')
 
-    if not os.path.isdir('./Data_folder/test'):
-        os.mkdir('./Data_folder/test')
+    if not os.path.isdir('/data/Data_folder/test'):
+        os.mkdir('/data/Data_folder/test')
 
     for i in range(len(list_images)-int(args.split)):
 
-        save_directory_images = './Data_folder/train/images'
-        save_directory_labels = './Data_folder/train/labels'
+        save_directory_images = '/data/Data_folder/train/images'
+        save_directory_labels = '/data/Data_folder/train/labels'
 
         if not os.path.isdir(save_directory_images):
             os.mkdir(save_directory_images)
@@ -181,8 +181,8 @@ if __name__ == "__main__":
         label = sitk.ReadImage(b)
         image = sitk.ReadImage(a)
 
-        label, reference_image = Registration(label, reference_image)
-        image, label = Registration(image, label)
+        # label, reference_image = Registration(label, reference_image)
+        # image, label = Registration(image, label)
 
         image = resample_sitk_image(image, spacing=args.resolution, interpolator='linear')
         label = resample_sitk_image(label, spacing=args.resolution, interpolator='linear')
@@ -190,16 +190,28 @@ if __name__ == "__main__":
         # image = Align(image, reference_image)
         # label = Align(label, reference_image)
 
-        label_directory = os.path.join(str(save_directory_labels), str(i) + '.nii')
-        image_directory = os.path.join(str(save_directory_images), str(i) + '.nii')
+        label_file = b.split("/")[-1].split("-")[0].split(".")[0]
+        if "CE" in label_file:
+            label_file =  label_file[2:] + "P_post"
+        else:
+            label_file =  label_file + "_post"
+
+        image_file = a.split("/")[-1].split("-")[0].split(".")[0]
+        if "pre"  in image_file:
+            image_file = image_file[3:] + "P_pre"
+        else:
+            image_file = image_file + "_pre"
+
+        label_directory = os.path.join(str(save_directory_labels), label_file + '.nii')
+        image_directory = os.path.join(str(save_directory_images), image_file + '.nii')
 
         sitk.WriteImage(image, image_directory)
         sitk.WriteImage(label, label_directory)
 
     for i in range(int(args.split)):
 
-        save_directory_images = './Data_folder/test/images'
-        save_directory_labels = './Data_folder/test/labels'
+        save_directory_images = '/data/Data_folder/test/images'
+        save_directory_labels = '/data/Data_folder/test/labels'
 
         if not os.path.isdir(save_directory_images):
             os.mkdir(save_directory_images)

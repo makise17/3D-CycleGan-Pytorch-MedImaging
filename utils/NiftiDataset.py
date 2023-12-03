@@ -162,13 +162,13 @@ def resample_sitk_image(sitk_image, spacing=None, interpolator=None, fill_value=
     orig_direction = sitk_image.GetDirection()
     orig_spacing = np.array(sitk_image.GetSpacing())
     orig_size = np.array(sitk_image.GetSize(), dtype=int)
-    # orig_size = np.array(sitk_image.GetSize(), dtype=np.int)
-
 
     if not spacing:
         min_spacing = orig_spacing.min()
         new_spacing = [min_spacing] * num_dim
     else:
+        if type(spacing) == str:
+            spacing = spacing.replace("(","").replace(")","").split(",")
         new_spacing = [float(s) for s in spacing]
 
     assert interpolator in _SITK_INTERPOLATOR_DICT.keys(), \
@@ -180,28 +180,19 @@ def resample_sitk_image(sitk_image, spacing=None, interpolator=None, fill_value=
     print("new_spacing",new_spacing)
 
     new_size = orig_size * (orig_spacing / new_spacing)
-    # new_size = np.ceil(new_size).astype(np.int)  # Image dimensions are in integers
     new_size = np.ceil(new_size).astype(int)  # Image dimensions are in integers
 
     new_size = [int(s) for s in new_size]  # SimpleITK expects lists, not ndarrays
 
     resample_filter = sitk.ResampleImageFilter()
+    resample_filter.SetOutputSpacing(new_spacing)
     resample_filter.SetSize(new_size)
-    resample_filter.SetOutputDirection(sitk_image.GetDirection())
-    resample_filter.SetOutputOrigin(sitk_image.GetOrigin())
+    resample_filter.SetOutputDirection(orig_direction)
+    resample_filter.SetOutputOrigin(orig_origin)
     resample_filter.SetTransform(sitk.Transform())
-    resample_filter.SetDefaultPixelValue(sitk_image.GetPixelIDValue())
+    resample_filter.SetDefaultPixelValue(orig_pixelid)
     resample_filter.SetInterpolator(sitk_interpolator)
-
-    # resampled_sitk_image = resample_filter.Execute(sitk_image,
-    #                                                new_size,
-    #                                                sitk.Transform(),
-    #                                                sitk_interpolator,
-    #                                                orig_origin,
-    #                                                new_spacing,
-    #                                                orig_direction,
-    #                                                fill_value,
-    #                                                orig_pixelid)
+    resample_filter.SetDefaultPixelValue(fill_value)
     resampled_sitk_image = resample_filter.Execute(sitk_image)
     return resampled_sitk_image
 
