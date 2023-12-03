@@ -28,7 +28,7 @@ if __name__ == '__main__':
                 # NiftiDataset.RandomCrop((opt.patch_size[0], opt.patch_size[1], opt.patch_size[2]), opt.drop_ratio, min_pixel),
                 # NiftiDataset.RandomCrop((210, 128, 90), opt.drop_ratio, min_pixel),
                 # NiftiDataset.Crop((213, 128, 90), opt.drop_ratio, min_pixel),
-                NiftiDataset.Resize((128, 64, 64), True),
+                NiftiDataset.Resize((128, 128, 64), True),
                 # NiftiDataset.Resample((2, 2, 2), True),
                 ]
 

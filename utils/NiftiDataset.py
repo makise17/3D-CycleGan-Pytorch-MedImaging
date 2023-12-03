@@ -176,14 +176,14 @@ def resample_sitk_image(sitk_image, spacing=None, interpolator=None, fill_value=
 
     sitk_interpolator = _SITK_INTERPOLATOR_DICT[interpolator]
 
-    print("orig_spacing",orig_spacing)
-    print("new_spacing",new_spacing)
+
 
     new_size = orig_size * (orig_spacing / new_spacing)
     new_size = np.ceil(new_size).astype(int)  # Image dimensions are in integers
 
     new_size = [int(s) for s in new_size]  # SimpleITK expects lists, not ndarrays
-
+    print("orig_spacing",orig_spacing, "orig_size",orig_size)
+    print("new_spacing",new_spacing, "new_size",new_size)
     resample_filter = sitk.ResampleImageFilter()
     resample_filter.SetOutputSpacing(new_spacing)
     resample_filter.SetSize(new_size)
