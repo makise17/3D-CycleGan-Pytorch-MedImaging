@@ -2,6 +2,7 @@ import os
 from options.test_options import TestOptions
 import sys
 from utils.NiftiDataset import *
+# import utils.NiftiDataset as NiftiDataset
 import utils.NiftiDataset as NiftiDataset_testing
 from torch.utils.data import DataLoader
 from models import create_model
@@ -40,7 +41,9 @@ def inference(model, image_path, result_path, resample, resolution, patch_size_x
 
     # create transformations to image and labels
     transforms1 = [
-        NiftiDataset_testing.Resample(resolution, resample)
+        # NiftiDataset_testing.Resample(resolution, resample)
+        # NiftiDataset_testing.Resize((128, 128, 32), True),
+        # NiftiDataset_testing.Crop((128, 64, 32)),
     ]
 
     transforms2 = [
@@ -78,6 +81,7 @@ def inference(model, image_path, result_path, resample, resolution, patch_size_x
 
     image_pre_pad = sample['image']
 
+    # パッチサイズよりも小さいデータへの保証を意図している？
     for transform in transforms2:
         sample = transform(sample)
 
@@ -90,11 +94,11 @@ def inference(model, image_path, result_path, resample, resolution, patch_size_x
     label_np = np.asarray(label_np, np.float32)
 
     # unify numpy and sitk orientation
+    # zyx -> xyz
     image_np = np.transpose(image_np, (2, 1, 0))
     label_np = np.transpose(label_np, (2, 1, 0))
 
     # ----------------- Padding the image if the z dimension still is not even ----------------------
-
     if (image_np.shape[2] % 2) == 0:
         Padding = False
     else:

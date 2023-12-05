@@ -27,8 +27,17 @@ if __name__ == '__main__':
                 # NiftiDataset.Padding((opt.patch_size[0], opt.patch_size[1], opt.patch_size[2])),
                 # NiftiDataset.RandomCrop((opt.patch_size[0], opt.patch_size[1], opt.patch_size[2]), opt.drop_ratio, min_pixel),
                 # NiftiDataset.RandomCrop((210, 128, 90), opt.drop_ratio, min_pixel),
-                NiftiDataset.Resize((128, 128, 32), True),
-                NiftiDataset.Crop((opt.patch_size[0], opt.patch_size[1], opt.patch_size[2]), opt.drop_ratio, min_pixel),
+ 
+                # 1つ目
+                # NiftiDataset.Resize((128, 128, 32), True),
+                # NiftiDataset.Crop((opt.patch_size[0], opt.patch_size[1], opt.patch_size[2]), opt.drop_ratio, min_pixel),
+ 
+                # 2つ目
+                NiftiDataset.Resize((320, 320, 70), True),
+                NiftiDataset.Crop((320, 160, 70), opt.drop_ratio, min_pixel),
+                # NiftiDataset.Resize((320, 160, 70), True),
+                NiftiDataset.RandomCrop((opt.patch_size[0], opt.patch_size[1], opt.patch_size[2]),
+                                        opt.drop_ratio, min_pixel)
                 # NiftiDataset.Resample((2, 2, 2), True),
                 ]
 

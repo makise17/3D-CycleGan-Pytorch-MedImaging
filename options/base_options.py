@@ -121,6 +121,11 @@ class BaseOptions():
         if isinstance(opt.resample ,str):
             opt.resample = bool(opt.resample)
 
+        if isinstance(opt.min_pixel ,str):
+            opt.min_pixel = float(opt.min_pixel)
+        if isinstance(opt.drop_ratio ,str):
+            opt.drop_ratio = float(opt.drop_ratio)
+
         self.opt = opt
         return self.opt
 
