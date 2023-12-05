@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.nn import init
 import functools
 from torch.optim import lr_scheduler
-import monai
+#import monai
 
 ###############################################################################
 # Helper Functions
@@ -82,6 +82,7 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6)
     elif netG == 'unet_custom':
         net = UnetGenerator(input_nc, output_nc, 5, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
+        # net = UnetGenerator(input_nc, output_nc, 5, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == 'unet_128':
         net = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == 'unet_256':
@@ -332,37 +333,37 @@ class UnetSkipConnectionBlock(nn.Module):
 
 
 def Dynet():
+    pass
+    # sizes, spacings = [128, 128, 64], (1.5,1.5,1.5)
 
-    sizes, spacings = [128, 128, 64], (1.5,1.5,1.5)
+    # strides, kernels = [], []
 
-    strides, kernels = [], []
+    # while True:
+    #     spacing_ratio = [sp / min(spacings) for sp in spacings]
+    #     stride = [2 if ratio <= 2 and size >= 8 else 1 for (ratio, size) in zip(spacing_ratio, sizes)]
+    #     kernel = [3 if ratio <= 2 else 1 for ratio in spacing_ratio]
+    #     if all(s == 1 for s in stride):
+    #         break
+    #     sizes = [i / j for i, j in zip(sizes, stride)]
+    #     spacings = [i * j for i, j in zip(spacings, stride)]
+    #     kernels.append(kernel)
+    #     strides.append(stride)
+    # strides.insert(0, len(spacings) * [1])
+    # kernels.append(len(spacings) * [3])
 
-    while True:
-        spacing_ratio = [sp / min(spacings) for sp in spacings]
-        stride = [2 if ratio <= 2 and size >= 8 else 1 for (ratio, size) in zip(spacing_ratio, sizes)]
-        kernel = [3 if ratio <= 2 else 1 for ratio in spacing_ratio]
-        if all(s == 1 for s in stride):
-            break
-        sizes = [i / j for i, j in zip(sizes, stride)]
-        spacings = [i * j for i, j in zip(spacings, stride)]
-        kernels.append(kernel)
-        strides.append(stride)
-    strides.insert(0, len(spacings) * [1])
-    kernels.append(len(spacings) * [3])
+    # net = monai.networks.nets.DynUNet(
+    #     spatial_dims=3,
+    #     in_channels=1,
+    #     out_channels=1,
+    #     kernel_size=kernels,
+    #     strides=strides,
+    #     upsample_kernel_size=strides[1:],
+    #     res_block=True,
+    # )
 
-    net = monai.networks.nets.DynUNet(
-        spatial_dims=3,
-        in_channels=1,
-        out_channels=1,
-        kernel_size=kernels,
-        strides=strides,
-        upsample_kernel_size=strides[1:],
-        res_block=True,
-    )
+    # net.add_module("activation", torch.nn.Tanh())
 
-    net.add_module("activation", torch.nn.Tanh())
-
-    return net
+    # return net
 
 
 # Defines the PatchGAN discriminator with the specified arguments.

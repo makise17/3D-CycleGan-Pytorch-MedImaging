@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/pytorch:22.08-py3
+FROM nvcr.io/nvidia/pytorch:21.09-py3
 
 # Set bash as default shell
 ENV SHELL=/bin/bash
@@ -23,9 +23,9 @@ RUN pip install --no-cache-dir --upgrade pip wheel setuptools
 #RUN conda install -c conda-forge nodejs
 #RUN pip install llvmlite --ignore-installed
 RUN pip install --no-cache-dir \
-    opencv-python==4.5.4.60  \ 
-    opencv-contrib-python==4.5.4.60  \
-    opencv-python-headless==4.5.4.60 \    
+    opencv-python \ 
+    #opencv-contrib-python \
+    #opencv-python-headless \    
     scikit-image \
     jupyterlab \
     ipywidgets \

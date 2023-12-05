@@ -18,21 +18,21 @@ if __name__ == '__main__':
 
     # -----  Transformation and Augmentation process for the data  -----
     min_pixel = int(opt.min_pixel * ((opt.patch_size[0] * opt.patch_size[1] * opt.patch_size[2]) / 100))
-    choices = [0, 1, 2, 4]
+    # choices = [0, 1, 2, 4]
     trainTransforms = [
-                NiftiDataset.RandomCrop((213, 213, 90), opt.drop_ratio, min_pixel),
+                # NiftiDataset.RandomCrop((213, 213, 90), opt.drop_ratio, min_pixel),
                 # NiftiDataset.RandomCrop((opt.patch_size[0], opt.patch_size[1], opt.patch_size[2]), opt.drop_ratio, min_pixel),
                 # NiftiDataset.Augmentation(),
-                NiftiDataset.Augmentation(choices),
+                # NiftiDataset.Augmentation(choices),
                 # NiftiDataset.Padding((opt.patch_size[0], opt.patch_size[1], opt.patch_size[2])),
                 # NiftiDataset.RandomCrop((opt.patch_size[0], opt.patch_size[1], opt.patch_size[2]), opt.drop_ratio, min_pixel),
                 # NiftiDataset.RandomCrop((210, 128, 90), opt.drop_ratio, min_pixel),
-                # NiftiDataset.Crop((213, 128, 90), opt.drop_ratio, min_pixel),
-                NiftiDataset.Resize((128, 128, 64), True),
+                NiftiDataset.Resize((128, 128, 32), True),
+                NiftiDataset.Crop((opt.patch_size[0], opt.patch_size[1], opt.patch_size[2]), opt.drop_ratio, min_pixel),
                 # NiftiDataset.Resample((2, 2, 2), True),
                 ]
 
-    train_set = NiftiDataset.NifitDataSet(opt.data_path, which_direction='AtoB', transforms=trainTransforms, shuffle_labels=True, train=True)
+    train_set = NiftiDataset.NifitDataSet(opt.data_path, which_direction='AtoB', transforms=trainTransforms, shuffle_labels=False, train=True)
     print('lenght train list:', len(train_set))
     train_loader = DataLoader(train_set, batch_size=opt.batch_size, shuffle=True, num_workers=opt.workers, pin_memory=True)  # Here are then fed to the network with a defined batch size
 

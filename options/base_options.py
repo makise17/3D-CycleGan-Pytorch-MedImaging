@@ -27,7 +27,7 @@ class BaseOptions():
         parser.add_argument('--n_layers_D', type=int, default=3, help='only used if netD==n_layers')
         parser.add_argument('--netG', type=str, default='resnet_9blocks', help='selects model to use for netG. Look on Networks3D to see the all list')
 
-        parser.add_argument('--gpu_ids', default='2,3', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
+        parser.add_argument('--gpu_ids', default='0', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
         parser.add_argument('--name', type=str, default='experiment_name', help='name of the experiment. It decides where to store samples and models')
         parser.add_argument('--model', type=str, default='cycle_gan', help='chooses which model to use. cycle_gan')
 
@@ -86,7 +86,14 @@ class BaseOptions():
             opt_file.write('\n')
 
     def parse(self):
-
+        def tuple_type(strings, ttype= int):
+            strings = strings.replace("(", "").replace(")", "").replace(" ", "")
+            mapped_int = map(ttype, strings.split(","))
+            return tuple(mapped_int)
+        def list_type(strings, ltipe=int):
+            strings = strings.replace("[", "").replace("]", "").replace(" ", "")
+            mapped_int = map(ltipe, strings.split(","))
+            return list(mapped_int)
         opt = self.gather_options()
         opt.isTrain = self.isTrain  # train or test
 
@@ -97,26 +104,20 @@ class BaseOptions():
 
         self.print_options(opt)
 
-        # set gpu ids
-        str_ids = list(opt.gpu_ids)
-        str_ids.remove(',')
-        opt.gpu_ids = []
-        for str_id in str_ids:
-            id = int(str_id)
-            if id >= 0:
-                opt.gpu_ids.append(id)
-        if len(opt.gpu_ids) > 0:
-            torch.cuda.set_device(opt.gpu_ids[0])
+        # set gpu ids        
+        if isinstance(opt.gpu_ids, str):
+            opt.gpu_ids  = list_type(opt.gpu_ids)
+            for i, id in enumerate(opt.gpu_ids):
+                opt.gpu_ids[i] = int(id)
+        # if len(opt.gpu_ids) > 0:
+        #     torch.cuda.set_device(opt.gpu_ids[0])
 
+        if isinstance(opt.patch_size, str):
+            opt.patch_size  = list_type(opt.patch_size)
 
         if isinstance(opt.new_resolution ,str):
+            opt.new_resolution = tuple_type(opt.new_resolution, ttype=float)
 
-            def tuple_type(strings):
-                strings = strings.replace("(", "").replace(")", "")
-                mapped_int = map(int, strings.split(","))
-                return tuple(mapped_int)
-        
-            opt.new_resolution = tuple_type(opt.new_resolution )
         if isinstance(opt.resample ,str):
             opt.resample = bool(opt.resample)
 

@@ -493,7 +493,7 @@ class NifitDataSet(torch.utils.data.Dataset):
         # from monai.visualize import matshow3d
         # import matplotlib.pyplot as plt
         # fig = plt.figure()
-        # matshow3d(sitk.GetArrayViewFromImage(sample['image']), fig=fig, title="List of Volumes")
+        # matshow3d(sitk.GetArrayViewFromI５age(sample['image']), fig=fig, title="List of Volumes")
         # plt.savefig(f"samples/{index}.png")
 
 
@@ -1502,9 +1502,9 @@ class Crop(object):
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
         size_old = image.GetSize()
-        print("size_old",size_old)
+        # print("size_old",size_old)
         size_new = self.output_size
-        print("size_new", size_new)
+        # print("size_new", size_new)
 
         contain_label = False
 
@@ -1525,11 +1525,11 @@ class Crop(object):
                 # start_i = np.random.randint(0, size_old[0] - size_new[0])
 
             if size_old[1] <= size_new[1]:
-                start_j = 0
-                # start_j = size_old[1] - size_new[1]
-            else:
-                start_j = size_old[1] - size_new[1]
                 # start_j = 0
+                start_j = size_old[1] - size_new[1]
+            else:
+                # start_j = size_old[1] - size_new[1]
+                start_j = 0
                 # start_j = self.output_size[1]
                 # start_j = np.random.randint(0, size_old[1] - size_new[1])
 
