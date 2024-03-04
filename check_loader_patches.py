@@ -8,13 +8,13 @@ import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--data_path", type=str, default=r'/data/Data_folder/test/')
+parser.add_argument("--data_path", type=str, default=r'/data/Data_folder/test2/')
 # parser.add_argument("--resample", action='store_true', default=False, help='Decide or not to resample the images to a new resolution')
 # parser.add_argument("--new_resolution", type=float, default=(0.5, 0.5, 0.5), help='New resolution')
 parser.add_argument("--patch_size", type=int, nargs=3, default=[64, 64, 64], help="Input dimension for the generator")
 parser.add_argument("--batch_size", type=int, nargs=1, default=5, help="Batch size to feed the network (currently supports 1)")
-parser.add_argument("--drop_ratio", type=float, nargs=1, default=0, help="Probability to drop a cropped area if the label is empty. All empty patches will be dropped for 0 and accept all cropped patches if set to 1")
-parser.add_argument("--min_pixel", type=int, nargs=1, default=50.0, help="Percentage of minimum non-zero pixels in the cropped label")
+parser.add_argument("--drop_ratio", type=float, nargs=1, default=0.01, help="Probability to drop a cropped area if the label is empty. All empty patches will be dropped for 0 and accept all cropped patches if set to 1")
+parser.add_argument("--min_pixel", type=int, nargs=1, default=30.0, help="Percentage of minimum non-zero pixels in the cropped label")
 
 args = parser.parse_args()
 
@@ -25,10 +25,14 @@ np.random.seed(0)
 # choices = [4]
 trainTransforms = [
     # 比較
-    NiftiDataset.Resize((320, 320, 70), True),
-    NiftiDataset.Crop((320, 160, 70), args.drop_ratio, min_pixel),
+    # NiftiDataset.Resize((340, 340, 150), True),
+    # NiftiDataset.Crop((340, 170, 150), args.drop_ratio, min_pixel),
+
+    NiftiDataset.Resize((170, 170, 75), True),
+    NiftiDataset.Crop((170, 85, 75), args.drop_ratio, min_pixel),
+
     # デフォ
-    # NiftiDataset.Augmentation(),
+    NiftiDataset.Augmentation(),
     # NiftiDataset.Padding((128, 128, 64)),
     # NiftiDataset.RandomCrop((128, 128, 64), args.drop_ratio, min_pixel),
  
@@ -82,7 +86,7 @@ def plot3d(image):
 
 
 # batch1 = train_loader.dataset[random.randint(0, len(train_gen) - 1)]
-index = 0
+index = 1
 batch1 = train_loader.dataset[index]
 
 

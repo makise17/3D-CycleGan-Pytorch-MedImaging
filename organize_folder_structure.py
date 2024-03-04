@@ -147,6 +147,10 @@ parser.add_argument('--split', default=10, help='number of images for testing')
 parser.add_argument('--resolution', default=(1.6,1.6,1.6), help='new resolution to resample the all data')
 args = parser.parse_args()
 
+output_testdir = 'test3'
+output_traindir = 'train3'
+
+
 if __name__ == "__main__":
 
     list_images = lstFiles(args.images)
@@ -156,16 +160,16 @@ if __name__ == "__main__":
     reference_image = sitk.ReadImage(reference_image)
     reference_image = resample_sitk_image(reference_image, spacing=args.resolution, interpolator='linear')
 
-    if not os.path.isdir('/data/Data_folder/train'):
-        os.mkdir('/data/Data_folder/train')
+    if not os.path.isdir(f'/data/Data_folder/{output_traindir}'):
+        os.mkdir(f'/data/Data_folder/{output_traindir}')
 
-    if not os.path.isdir('/data/Data_folder/test'):
-        os.mkdir('/data/Data_folder/test')
+    if not os.path.isdir(f'/data/Data_folder/{output_testdir}'):
+        os.mkdir(f'/data/Data_folder/{output_testdir}')
 
     for i in range(len(list_images)-int(args.split)):
 
-        save_directory_images = '/data/Data_folder/train/images'
-        save_directory_labels = '/data/Data_folder/train/labels'
+        save_directory_images = f'/data/Data_folder/{output_traindir}/images'
+        save_directory_labels = f'/data/Data_folder/{output_traindir}/labels'
 
         if not os.path.isdir(save_directory_images):
             os.mkdir(save_directory_images)
@@ -210,8 +214,8 @@ if __name__ == "__main__":
 
     for i in range(int(args.split)):
 
-        save_directory_images = '/data/Data_folder/test/images'
-        save_directory_labels = '/data/Data_folder/test/labels'
+        save_directory_images = f'/data/Data_folder/{output_testdir}/images'
+        save_directory_labels = f'/data/Data_folder/{output_testdir}/labels'
 
         if not os.path.isdir(save_directory_images):
             os.mkdir(save_directory_images)

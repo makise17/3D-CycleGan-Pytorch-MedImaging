@@ -41,13 +41,16 @@ def inference(model, image_path, result_path, resample, resolution, patch_size_x
 
     # create transformations to image and labels
     transforms1 = [
-        # NiftiDataset_testing.Resample(resolution, resample)
-        # NiftiDataset_testing.Resize((128, 128, 32), True),
+        # NiftiDataset_testing.Resample(resolution, resample),
+        # NiftiDataset_testing.Resize((340, 340, 150), True),
+
         # NiftiDataset_testing.Crop((128, 64, 32)),
-        # NiftiDataset_testing.Resize((320, 320, 70), True),
-        # NiftiDataset_testing.Crop((320, 160, 70), 0.2, 1),
+        
+        # NiftiDataset_testing.Resize((256, 256, 64), True),
+        # NiftiDataset_testing.Crop((256, 128, 64), 0.2, 1),
+
         # NiftiDataset_testing.RandomCrop((opt.patch_size[0], opt.patch_size[1], opt.patch_size[2]),
-        #                                 0.2, 1)
+        #                                 0.2, 40)
     ]
 
     transforms2 = [
@@ -214,6 +217,31 @@ def inference(model, image_path, result_path, resample, resolution, patch_size_x
     writer.Execute(label)
     print("{}: Save evaluate label at {} success".format(datetime.datetime.now(), result_path))
 
+def numericalSort(value):
+    numbers = re.compile(r'(\d+)')
+    parts = numbers.split(value)
+    parts[1::2] = map(int, parts[1::2])
+    return parts
+
+def lstFiles(Path):
+
+    images_list = []  # create an empty list, the raw image data files is stored here
+    file_list = []
+    for dirName, subdirList, fileList in os.walk(Path):
+        for filename in fileList:
+            if ".nii.gz" in filename.lower():
+                images_list.append(os.path.join(dirName, filename))
+                file_list.append(filename)
+            elif ".nii" in filename.lower():
+                images_list.append(os.path.join(dirName, filename))
+                file_list.append(filename)
+            elif ".mhd" in filename.lower():
+                images_list.append(os.path.join(dirName, filename))
+                file_list.append(filename)
+
+    images_list = sorted(images_list, key=numericalSort)
+    file_list = sorted(file_list, key=numericalSort)
+    return images_list, file_list
 
 if __name__ == '__main__':
 
@@ -221,7 +249,9 @@ if __name__ == '__main__':
 
     model = create_model(opt)
     model.setup(opt)
-
-    inference(model, opt.image, opt.result, opt.resample, opt.new_resolution, opt.patch_size[0],
-              opt.patch_size[1], opt.patch_size[2], opt.stride_inplane, opt.stride_layer, 1)
+    images_list, file_list= lstFiles(opt.data_path)
+    for inpath, outfile  in zip(images_list,file_list):
+        outfile = "result_" + outfile
+        inference(model, inpath, os.path.join("/data/Data_folder/result/",outfile), opt.resample, opt.new_resolution, opt.patch_size[0],
+                opt.patch_size[1], opt.patch_size[2], opt.stride_inplane, opt.stride_layer, 1)
 

@@ -33,8 +33,8 @@ if __name__ == '__main__':
                 # NiftiDataset.Crop((opt.patch_size[0], opt.patch_size[1], opt.patch_size[2]), opt.drop_ratio, min_pixel),
  
                 # 2つ目
-                NiftiDataset.Resize((320, 320, 70), True),
-                NiftiDataset.Crop((320, 160, 70), opt.drop_ratio, min_pixel),
+                NiftiDataset.Resize((170, 170, 75), True),
+                NiftiDataset.Crop((170, 85, 75), opt.drop_ratio, min_pixel),
                 # NiftiDataset.Resize((320, 160, 70), True),
                 NiftiDataset.RandomCrop((opt.patch_size[0], opt.patch_size[1], opt.patch_size[2]),
                                         opt.drop_ratio, min_pixel)
